@@ -7,7 +7,7 @@
 ## First Meeting Updates
 - Did first part of the Implementation
 - Implementation of Vanilla Version
-![Alt text]("V1/output.gif" "Game Start")
+![Alt text]("./V1/output.gif" "Game Start")
 
 
 
