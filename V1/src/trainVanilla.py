@@ -6,7 +6,6 @@ import tflearn
 import random
 import math
 import os
-#os.system("chmod +w /unsullied/sharefs/wangmengdi/wangmengdi")
 import time
 import zlib
 import socket
@@ -118,115 +117,43 @@ def main(resourceid,keyname):
 		sess.run(tf.global_variables_initializer())
 		trainloss_accs=[0,0,0]
 		trainloss_acc0=1e-9 # Training Loss
-		validloss_accs=[0,0,0]
-		validloss_acc0=1e-9 # validation Loss
-		lastsave=time.time()
 		bno=sess.run(batchno) # gets the initial value for batch number ie gradient step
 		fetchworker.bno = bno//(FETCH_BATCH_SIZE/BATCH_SIZE) # fetch worker is an instance of Class BatchFetcher
 		fetchworker.start()
 		while bno<300000:
-			t0=time.time()
 			data,ptcloud,validating = fetch_batch() # Gets the Input data, Ground Truth, Validation Bit
-			t1=time.time() # start time
-			validating = validating[0]!=0
-			if not validating: # For Training
-				_,pred,total_loss,trainloss,trainloss1,trainloss2,distmap_0=sess.run([optimizer,x,loss,loss_nodecay,dists_forward,dists_backward,dist0],
-					feed_dict={img_inp:data,pt_gt:ptcloud}) # Getting all the Training Values
+			_,pred,total_loss,trainloss,trainloss1,trainloss2,distmap_0=sess.run([optimizer,x,loss,loss_nodecay,dists_forward,dists_backward,dist0],
+																				  feed_dict={img_inp:data,pt_gt:ptcloud}) # Getting all the Training Values
 				# Trainloss = loss_nodecay
 				# total_loss = loss
 				# trainloss1 = distance_forward
 				# trainloss2 = distanse_backward
 				# distmap_0 = dist0
 
-				trainloss_accs[0]=trainloss_accs[0]*0.99+trainloss
-				trainloss_accs[1]=trainloss_accs[1]*0.99+trainloss1
-				trainloss_accs[2]=trainloss_accs[2]*0.99+trainloss2
-				trainloss_acc0=trainloss_acc0*0.99+1
-			else:
-				_,pred,total_loss,validloss,validloss1,validloss2,distmap_0=sess.run([batchnoinc,x,loss,loss_nodecay,dists_forward,dists_backward,dist0],
-					feed_dict={img_inp:data,pt_gt:ptcloud})
-				validloss_accs[0]=validloss_accs[0]*0.997+validloss
-				validloss_accs[1]=validloss_accs[1]*0.997+validloss1
-				validloss_accs[2]=validloss_accs[2]*0.997+validloss2
-				validloss_acc0=validloss_acc0*0.997+1
-			t2=time.time() # end timer
-			down=2
+			trainloss_accs[0]=trainloss_accs[0]*0.99+trainloss
+			trainloss_accs[1]=trainloss_accs[1]*0.99+trainloss1
+			trainloss_accs[2]=trainloss_accs[2]*0.99+trainloss2
+			trainloss_acc0=trainloss_acc0*0.99+1
 
 			bno=sess.run(batchno) # again retreiving the gradient step
-			if not validating:
-				showloss=trainloss
-				showloss1=trainloss1
-				showloss2=trainloss2
-			else:
-				showloss=validloss
-				showloss1=validloss1
-				showloss2=validloss2
-			print >>fout,bno,trainloss_accs[0]/trainloss_acc0,trainloss_accs[1]/trainloss_acc0,trainloss_accs[2]/trainloss_acc0,showloss,showloss1,showloss2,validloss_accs[0]/validloss_acc0,validloss_accs[1]/validloss_acc0,validloss_accs[2]/validloss_acc0,total_loss-showloss
-			# Printed all the values in fout file
-			if bno%128==0:
-				fout.flush()
-			if time.time()-lastsave>900: # inevery time interval 900 seconds or apprx 15 mins create checkpoints
-				saver.save(sess,'%s/'%dumpdir+keyname+".ckpt")
-				lastsave=time.time()
-			print bno,'t',trainloss_accs[0]/trainloss_acc0,trainloss_accs[1]/trainloss_acc0,trainloss_accs[2]/trainloss_acc0,'v',validloss_accs[0]/validloss_acc0,validloss_accs[1]/validloss_acc0,validloss_accs[2]/validloss_acc0,total_loss-showloss,t1-t0,t2-t1,time.time()-t0,fetchworker.queue.qsize()
-		saver.save(sess,'%s/'%dumpdir+keyname+".ckpt") # after 3 lakh gradient steps on one batch of 32 images
 
-def dumppredictions(resourceid,keyname,valnum):
-	img_inp,x,pt_gt,loss,optimizer,batchno,batchnoinc,mindist,loss_nodecay,dists_forward,dists_backward,dist0=build_graph(resourceid)
-	config=tf.ConfigProto()
-	config.gpu_options.allow_growth=True
-	config.allow_soft_placement=True
-	saver=tf.train.Saver()
-	fout = open("%s/%s.v.pkl"%(dumpdir,keyname),'wb') # open the existing model
-	with tf.Session(config=config) as sess:
-		#sess.run(tf.initialize_all_variables())
-		sess.run(tf.global_variables_initializer())
-		saver.restore(sess,"%s/%s.ckpt"%(dumpdir,keyname))
-		fetchworker.bno=0
-		fetchworker.start()
-		cnt=0
-		for i in xrange(0,300000):
-			t0=time.time()
-			data,ptcloud,validating=fetch_batch()
-			validating=validating[0]!=0
-			if not validating:
-				continue
-			cnt+=1
-			pred,distmap=sess.run([x,mindist],feed_dict={img_inp:data,pt_gt:ptcloud})
-			pickle.dump((i,data,ptcloud,pred,distmap),fout,protocol=-1)
-			print i,'time',time.time()-t0,cnt
-			if cnt>=valnum:
-				break
-	fout.close()
+			showloss=trainloss
+			showloss1=trainloss1
+			showloss2=trainloss2
+			print >>fout,bno,trainloss_accs[0]/trainloss_acc0,trainloss_accs[1]/trainloss_acc0,trainloss_accs[2]/trainloss_acc0,total_loss-showloss
+			# Printed all the values in fout file
+			print bno,'t',trainloss_accs[0]/trainloss_acc0, total_loss-showloss,fetchworker.queue.qsize()
+		saver.save(sess,'%s/'%dumpdir+keyname+".ckpt") # after 3 lakh gradient steps on one batch of 32 images
 
 if __name__=='__main__':
 	resourceid = 0
 	datadir,dumpdir,cmd,valnum="data","dump","predict",3
-	for pt in sys.argv[1:]:
-		if pt[:5]=="data=":
-			datadir = pt[5:]
-		elif pt[:5]=="dump=":
-			dumpdir = pt[5:]
-		elif pt[:4]=="num=":
-			valnum = int(pt[4:])
-		else:
-			cmd = pt
-	if datadir[-1]=='/':
-		datadir = datadir[:-1]
-	if dumpdir[-1]=='/':
-		dumpdir = dumpdir[:-1]
-	assert os.path.exists(datadir),"data dir not exists"
+	datadir = "../data/"
+	dumpdir = "../output/"
+	num = 2
 	os.system("mkdir -p %s"%dumpdir)
 	fetchworker=BatchFetcher(datadir)
-	print "datadir=%s dumpdir=%s num=%d cmd=%s started"%(datadir,dumpdir,valnum,cmd)
 
 	keyname=os.path.basename(__file__).rstrip('.py')
-	try:
-		if cmd=="train":
-			main(resourceid,keyname)
-		elif cmd=="predict":
-			dumppredictions(resourceid,keyname,valnum)
-		else:
-			assert False,"format wrong"
-	finally:
-		stop_fetcher()
+	main(resourceid,keyname)
+	stop_fetcher()
