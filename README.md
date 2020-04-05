@@ -1,5 +1,15 @@
 # CV Project Page
 
+## Quick Output
+<img src = "./V1/images/2.png" width = "250"></img>
+<img src = "./V1/images/2_m.png" width = "250"></img>
+<img src = "./V1/output/2_pcl.png" width = "250"></img>
+
+
+<img src = "./V1/images/3.png" width = "250"></img>
+<img src = "./V1/images/3_m.png" width = "250"></img>
+<img src = "./V1/output/3_pcl.png" width = "250"></img>
+
 ## Paper Title
 37, A Point Set Generation Network for 3D Object Reconstruction from a Single Image.
 <a href="https://arxiv.org/pdf/1612.00603.pdf"> Link to paper</a>
@@ -40,8 +50,6 @@ pip install < requirements.txt
 #
 to test
 #
-
-![Alt text](./V1/images/output.gif "Generated Point cloud Example")
 
 ## Error Plot
 ![Alt text](./V1/output/ErrorCurve.png "Error Plot")<br>
