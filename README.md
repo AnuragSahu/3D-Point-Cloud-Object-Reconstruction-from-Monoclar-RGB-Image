@@ -21,39 +21,64 @@
 
 ## Instructions to replicate this on Local Linux System
 - make sure you have ```git``` installed on your system
-- make sure that you have python 2 installed on your system
+- make sure that you have python 2 installed on your system <br>
 Steps:
-1. Get the path for python2
+- Get the path for python2
 ``` which python2```
 this will return the path where your python2 is installed
 
-2. Create a virtual Environment with python 2
+- Create a virtual Environment with python 2
 ``` virtualenv -p #path to python2
 example : virtualenv -p usr/bin/python2 testVenv
 ```
-3. clone the git repo
+- clone the git repo and get into the repo
 ```
 git clone https://github.com/AnuragSahu/CV_Project_2020_3D_Object_Reconstruction_from_a_Single_Image.git
+cd ./CV_Project_2020_3D_Object_Reconstruction_from_a_Single_Image/
 ```
 
-4. Activate the environment
+- Activate the environment
 ```
-source ./testVenv/bin/activate
-```
-
-5. install the requirements
-```
-pip install < requirements.txt
+source ../testVenv/bin/activate
 ```
 
-6. To train
-#
-to test
-#
+- install the requirements
+```
+pip install -r ./requirements.txt
+```
 
+- To train<br>
+#TODO<br>
+to test<br>
+```
+cd ./V1/src/
+python vanillaReconstruct.py \
+../images/1.png \
+../images/1_m.png \
+../vanillaVersionWeights.pkl
+
+python viz.py \
+../images/1.txt
+```
+
+## Test on your Image
+make sure that you have the mask image which filters out your object of interest from the background and also the image and mask are of size 256*192
+- Place the image and its mask to images folder (lets say that image has name myImage.png and its mask image is myImageMask.png)
+- run the code to get the 3d point clouds
+```
+python vanillaReconstruct.py \
+../images/myImage.png \
+../images/myImagemask.png \
+../vanillaVersionWeights.pkl
+```
+- Visualize the point cloud
+```
+python viz.py \
+../images/myImage.txt
+```
 ## Error Plot
 ![Alt text](./V1/output/ErrorCurve.png "Error Plot")<br>
-values at the bottom of the plt are crampled.<br>
+values at the bottom of the plot are crampled.<br>
 
 
 
