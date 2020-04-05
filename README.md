@@ -41,10 +41,6 @@ pip install < requirements.txt
 to test
 #
 
-## First Meeting Updates
-- Did first part of the Implementation
-- Implementation of Vanilla Version
-- Output<br>
 ![Alt text](./V1/images/output.gif "Generated Point cloud Example")
 
 ## Error Plot
