@@ -1,90 +1,104 @@
-import cv2
-import time
-import numpy as np
-import cPickle as pickle
-import tensorflow as tf
-import tflearn
 import sys
+import tflearn
+import cv2 as cv
+import numpy as np
+import tensorflow as tf
+import cPickle as pickle
 
-BATCH_SIZE=1
-HEIGHT=192
-WIDTH=256
+debug = False
 
-def loadModel(weightsfile):
-	with tf.device('/cpu'):
-		img_inp=tf.placeholder(tf.float32,shape=(BATCH_SIZE,HEIGHT,WIDTH,4),name='img_inp')
-		x=img_inp
-		#192 256
-		x=tflearn.layers.conv.conv_2d(x,16,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,16,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x0=x
-		x=tflearn.layers.conv.conv_2d(x,32,(3,3),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		#96 128
-		x=tflearn.layers.conv.conv_2d(x,32,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,32,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x1=x
-		x=tflearn.layers.conv.conv_2d(x,64,(3,3),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		#48 64
-		x=tflearn.layers.conv.conv_2d(x,64,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,64,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x2=x
-		x=tflearn.layers.conv.conv_2d(x,128,(3,3),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		#24 32
-		x=tflearn.layers.conv.conv_2d(x,128,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,128,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x3=x
-		x=tflearn.layers.conv.conv_2d(x,256,(3,3),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		#12 16
-		x=tflearn.layers.conv.conv_2d(x,256,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,256,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x4=x
-		x=tflearn.layers.conv.conv_2d(x,512,(3,3),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		#6 8
-		x=tflearn.layers.conv.conv_2d(x,512,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,512,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x=tflearn.layers.conv.conv_2d(x,512,(3,3),strides=1,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x5=x
-		x=tflearn.layers.conv.conv_2d(x,512,(5,5),strides=2,activation='relu',weight_decay=1e-5,regularizer='L2')
-		x_additional=tflearn.layers.core.fully_connected(x,2048,activation='relu',weight_decay=1e-3,regularizer='L2')
-		x_additional=tflearn.layers.core.fully_connected(x_additional,1024,activation='relu',weight_decay=1e-3,regularizer='L2')
-		x_additional=tflearn.layers.core.fully_connected(x_additional,256*3,activation='linear',weight_decay=1e-3,regularizer='L2')
-		x_additional=tf.reshape(x_additional,(BATCH_SIZE,256,3))
-	sess=tf.Session('')
-	sess.run(tf.global_variables_initializer())
-	loaddict={}
-	fin=open(weightsfile,'rb')
-	while True:
-		try:
-			v,p=pickle.load(fin)
-		except EOFError:
-			break
-		loaddict[v]=p
-	fin.close()
-	for t in tf.trainable_variables():
-		if t.name not in loaddict:
-			print 'missing',t.name
-		else:
-			sess.run(t.assign(loaddict[t.name]))
-			del loaddict[t.name]
-	for k in loaddict.iteritems():
-		if k[0]!='Variable:0':
-			print 'unused',k
-	return (sess,img_inp,x_additional)
+def run_image(model,image,image_mask):
+	image_filtered = image*(1-image_mask[:,:,None])+191*image_mask[:,:,None]
+	if(debug):
+		cv.imwrite(sys.argv[1][:-4]+"_filtered.jpg", image_filtered)
+	sess, imageVector, x = model
+	input_image = np.dstack([image_filtered.astype('float32')/255,
+		                     image_mask[:,:,None]])
+	if(input_image.shape!=(h,w,4)):
+		print("Mismatch in input, make sure that the input image and masks are of size 256,192")
+		return
 
-def run_image(model,img_in,img_mask):
-	(sess,img_inp,x)=model
-	img_in=img_in*(1-img_mask[:,:,None])+191*img_mask[:,:,None]
-	img_packed=np.dstack([img_in.astype('float32')/255,img_mask[:,:,None]])
-	assert img_packed.shape==(HEIGHT,WIDTH,4)
-
-	(ret,),=sess.run([x],feed_dict={img_inp:img_packed[None,:,:,:]})
+	(ret,),=sess.run([x],feed_dict={imageVector:input_image[None,:,:,:]})
 	return ret
 
+def getWeights(filePath):
+	loaddict={}
+	weightPath = open(filePath,'rb')
+	while True:
+		try:
+			key, value = pickle.load(weightPath)
+			loaddict[key] = value
+		except (EOFError):
+			break
+		
+	weightPath.close()
+	return loaddict
+
+def getFullyConnectedLayer(x, win, activation='relu', weight_decay=1e-2, regularizer = 'L2'):
+	return tflearn.layers.core.fully_connected(x, win, activation = activation,
+											   weight_decay = weight_decay, 
+											   regularizer = regularizer)
+
+def getConvolution2dLayer(x,  win = 16, window = (3, 3), strides = 1, activation = 'relu', weight_decay = 1e-5, regularizer = 'L2'):
+	return tflearn.layers.conv.conv_2d(x,  win, window, 
+									   strides = strides, 
+									   activation = activation, 
+									   weight_decay = weight_decay, 
+									   regularizer = regularizer)
+
+
+def buildGraph(weightsfile, batchSize, h, w):
+	with tf.device('/cpu'):
+		x = imageVector=tf.placeholder(tf.float32,name='imageVector',shape=(batchSize,h,w,4))
+		#Start Building the graph from here
+		#192 256
+		x = getConvolution2dLayer(x)
+		x = getConvolution2dLayer(x)
+		x = getConvolution2dLayer(x, win = 32, strides = 2)
+		#96 128
+		x = getConvolution2dLayer(x, win = 32)
+		x = getConvolution2dLayer(x, win = 32)
+		x = getConvolution2dLayer(x, win = 64, strides = 2)
+		#48 64
+		x = getConvolution2dLayer(x, win = 64)
+		x = getConvolution2dLayer(x, win = 64)
+		x = getConvolution2dLayer(x, win = 128, strides = 2)
+		#24 32
+		x = getConvolution2dLayer(x, win = 128)
+		x = getConvolution2dLayer(x, win = 128)
+		x = getConvolution2dLayer(x, win = 256, strides = 2)
+		#12 16
+		x = getConvolution2dLayer(x, win = 256)
+		x = getConvolution2dLayer(x, win = 256)
+		x = getConvolution2dLayer(x, win = 512, strides = 2)
+		#6 8
+		x = getConvolution2dLayer(x, win = 512)
+		x = getConvolution2dLayer(x, win = 512)
+		x = getConvolution2dLayer(x, win = 512)
+
+		x = getConvolution2dLayer(x, win = 512, window = (5,5), strides = 2)
+		x = getFullyConnectedLayer(x, 2048)
+		x = getFullyConnectedLayer(x, 1024)
+		x = getFullyConnectedLayer(x, 256*3, activation='linear')
+		# Reshape the final array to get the desired 3d points
+		x = tf.reshape(x, (batchSize, 256, 3))
+	sess=tf.Session('')
+	sess.run(tf.global_variables_initializer())
+	loaddict = getWeights(weightsfile)
+	for t in tf.trainable_variables():
+		sess.run(t.assign(loaddict[t.name]))
+		del loaddict[t.name] # remove the used weight to free memory
+	return (sess, imageVector, x)
+
+
 if __name__=='__main__':
-	model=loadModel(sys.argv[3])
-	img_in=cv2.imread(sys.argv[1])
-	img_mask=cv2.imread(sys.argv[2],0)!=0
-	fout=open(sys.argv[1]+'.txt','w')
-	ret=run_image(model,img_in,img_mask)
-	for x,y,z in ret:
-		print >>fout,x,y,z
+	batchSize=1
+	h=192
+	w=256
+	image = cv.imread(sys.argv[1])
+	image_mask = cv.imread(sys.argv[2],0)!=0
+	model = buildGraph(sys.argv[3], batchSize, h, w)
+	points = run_image(model,image,image_mask)
+	coordinates_file = open(sys.argv[1][:-4]+'.txt','w')
+	for x,y,z in points:
+		print >>coordinates_file,x,y,z
