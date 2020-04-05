@@ -36,20 +36,16 @@ example : virtualenv -p usr/bin/python2 testVenv
 git clone https://github.com/AnuragSahu/CV_Project_2020_3D_Object_Reconstruction_from_a_Single_Image.git
 cd ./CV_Project_2020_3D_Object_Reconstruction_from_a_Single_Image/
 ```
-
 - Activate the environment
 ```
 source ../testVenv/bin/activate
 ```
-
 - install the requirements
 ```
 pip install -r ./requirements.txt
 ```
-
-- To train<br>
-#TODO<br>
-to test<br>
+- to test<br> 
+download the weights file :  <a href = ""> Link </a> 
 ```
 cd ./V1/src/
 python vanillaReconstruct.py \
@@ -57,8 +53,7 @@ python vanillaReconstruct.py \
 ../images/1_m.png \
 ../vanillaVersionWeights.pkl
 
-python viz.py \
-../images/1.txt
+python viz.py ../images/1.txt
 ```
 
 ## Test on your Image
@@ -81,4 +76,6 @@ python viz.py \
 values at the bottom of the plot are crampled.<br>
 
 
-
+## TODO 
+- provide a the weights file
+- Write the instructions for Training
