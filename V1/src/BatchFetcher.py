@@ -11,7 +11,6 @@ import threading
 import Queue
 import sys
 import cPickle as pickle
-import show3d
 
 FETCH_BATCH_SIZE=32
 BATCH_SIZE=32
@@ -77,27 +76,4 @@ class BatchFetcher(threading.Thread):
 		self.stopped=True
 		while not self.queue.empty():
 			self.queue.get()
-
-if __name__=='__main__':
-	#dataname = "YTTRBtraindump_220k"
-	dataname = "./data"
-	fetchworker = BatchFetcher(dataname)
-	fetchworker.bno=0
-	fetchworker.start()
-	for cnt in xrange(2):
-		data,ptcloud,validating = fetchworker.fetch()
-		validating = validating[0]!=0
-		assert len(data)==FETCH_BATCH_SIZE
-		for i in range(len(data)-1):
-			cv2.imwrite('./Im'+str(i)+".png",data[i])
-			cv2.imshow('data',data[i])
-			while True:
-				cmd=show3d.showpoints(ptcloud[i])
-				if cmd==ord(' '):
-					break
-				elif cmd==ord('q'):
-					break
-			if cmd==ord('q'):
-				break
-
 

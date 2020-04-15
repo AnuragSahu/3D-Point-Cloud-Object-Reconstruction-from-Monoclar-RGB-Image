@@ -171,7 +171,7 @@ def main(resourceid,keyname):
 if __name__=='__main__':
 	resourceid = 0
 	datadir,dumpdir,cmd,valnum="data","dump","predict",3
-	datadir = "../data/"
+	datadir = "../../data/"
 	dumpdir = "../output/"
 	num = 2
 	os.system("mkdir -p %s"%dumpdir)
