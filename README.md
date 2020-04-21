@@ -13,5 +13,5 @@
 ## Quick Output
  <figure>
   <img src = "./Images/Results.png"></img>
-  <figcaption>Output - (a)Input, (b)Output V1, (c)Output V2.</figcaption>
+  <figcaption><b>Output - &emsp;&emsp;&emsp;Input&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Output V1 &emsp;&emsp;&emsp;&emsp;&emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Output V2.</b></figcaption>
 </figure> 
