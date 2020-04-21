@@ -11,7 +11,7 @@
 - Kajal Sanklecha (2019801006)
 
 ## Quick Output
-<img src = "./Images/Results.png"></img>
-## Error Plot
-![Alt text](./V1/output/ErrorCurve.png "Error Plot")<br>
-values at the bottom of the plot are crampled.<br>
+ <figure>
+  <img src = "./Images/Results.png"></img>
+  <figcaption>Output - (a)Input, (b)Output V1, (c)Output V2.</figcaption>
+</figure> 
