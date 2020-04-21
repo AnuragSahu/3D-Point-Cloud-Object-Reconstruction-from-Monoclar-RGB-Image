@@ -22,3 +22,4 @@ subprocess32==3.5.4
 tensorflow==1.2.0
 tflearn==0.3.2
 Werkzeug==1.0.0
+matplotlib==3.1.3
